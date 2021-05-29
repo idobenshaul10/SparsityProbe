@@ -3,7 +3,6 @@ import sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-# from matplotlib.pyplot import plot, ion, show
 from pathlib import Path
 import json
 from itertools import cycle

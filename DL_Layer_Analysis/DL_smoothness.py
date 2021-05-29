@@ -1,4 +1,3 @@
-# from __future__ import print_function
 import os 
 import sys
 import argparse
@@ -15,7 +14,6 @@ from utils.utils import *
 import time
 import json
 from collections import defaultdict
-# from torch.utils.data import TensorDataset, DataLoader
 import pickle
 from DL_Layer_Analysis.clustering import kmeans_cluster, \
 	get_clustering_statistics, create_umap
@@ -29,7 +27,6 @@ def get_args():
 	parser = argparse.ArgumentParser(description='Network Smoothness Script')	
 	parser.add_argument('--trees',default=1,type=int,help='Number of trees in the forest.')	
 	parser.add_argument('--depth', default=15, type=int,help='Maximum depth of each tree.Use 0 for unlimited depth.')	
-	# parser.add_argument('--bagging',default=0.8,type=float,help='Bagging. Only available when using the regressor.')
 	parser.add_argument('--seed', type=int, default=2, metavar='S', help='random seed (default: 1)')		
 	parser.add_argument('--batch_size', type=int, default=256)
 	parser.add_argument('--env_name', type=str, default="mnist_1d_env")
@@ -56,18 +53,10 @@ def init_params(args=None):
 	m = '.'.join(['environments', args.env_name])
 	module = importlib.import_module(m)
 	dict_input = vars(args)
-
 	environment = eval(f"module.{args.env_name}()")
-	# params_path = os.path.join(args.checkpoints_folder, 'args.p')
-	# if os.path.isfile(params_path):
-	# 	params = vars(pickle.load(open(params_path, 'rb')))
-
 	__, dataset, test_dataset, __ = environment.load_enviorment()	
 	model = environment.get_model()
-	# checkpoint_path = os.path.join(args.checkpoints_folder, args.checkpoint_file_name)
-	# model = environment.get_model(**params)
-	# checkpoint = torch.load(checkpoint_path)['checkpoint']	
-	# model.load_state_dict(checkpoint)	
+
 	if torch.cuda.is_available():
 		model = model.cuda()
 	
@@ -76,12 +65,7 @@ def init_params(args=None):
 	data_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
 	torch.manual_seed(args.seed)
 	np.random.seed(args.seed)
-	# addition = f"{args.env_name}_{args.trees}_{args.depth}_{args.high_range_epsilon}_{args.low_range_epsilon:.2f}_{args.seed}"
-
-	# args.output_folder = os.path.join(args.output_folder, addition)
-	# if not os.path.isdir(args.output_folder):
-	# 	os.mkdir(args.output_folder)
-
+		
 	return args, model, dataset, test_dataset, layers, data_loader
 
 activation = {}
