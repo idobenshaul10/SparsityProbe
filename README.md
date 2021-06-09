@@ -59,6 +59,7 @@ reduce dim(layer_outputs) to feature_dimension. Default feature_dimension is 250
 ### Plotting Results
 Result plots can be created using [this](https://github.com/idobenshaul10/SparsityProbe/blob/main/DL_Layer_Analysis/plot_DL_json_results.py) script. 
 
+![UMAP example](/Images/umap_cifar10.jpg)
 
 
 ## Acknowledgements
