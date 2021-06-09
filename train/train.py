@@ -29,7 +29,7 @@ def get_args():
 	parser.add_argument('--lr', default=0.001, type=float, help='lr for train')
 	parser.add_argument('--batch_size', default=32, type=int, help='batch_size for train/test')
 	parser.add_argument('--epochs', default=100, type=int, help='num epochs for train')
-	parser.add_argument('--env_name', type=str, default="mnist")
+	parser.add_argument('--env_name', type=str, default="cifar10_env")
 	parser.add_argument('--save_epochs', action="store_true")
 	args, _ = parser.parse_known_args()
 	args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
