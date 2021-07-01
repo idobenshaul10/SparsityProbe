@@ -15,11 +15,12 @@ import time
 import json
 from collections import defaultdict
 import pickle
-from DL_Layer_Analysis.clustering import kmeans_cluster, \
-	get_clustering_statistics, create_umap
-from DL_Layer_Analysis.get_dim_reduction import get_dim_reduction
+# from DL_Layer_Analysis.clustering import kmeans_cluster, \
+# 	get_clustering_statistics, create_umap
+# from DL_Layer_Analysis.get_dim_reduction import get_dim_reduction
+
 from matplotlib.pyplot import plot, ion, show
-#  python .\DL_smoothness.py --env_name cifar10_env --use_clustering
+from SparsityProbe import *
 
 ion()
 
@@ -146,7 +147,7 @@ def get_top_1_accuracy(model, data_loader, device):
 
 
 def run_smoothness_analysis(args, model, dataset, test_dataset, layers, data_loader):	
-	Y = torch.cat([target for (data, target) in tqdm(data_loader)]).detach()	
+	Y = torch.cat([target for (data, target) in tqdm(data_loader)]).detach()
 	norm_normalization = 'num_samples'	
 	visualize_umap = True
 
@@ -172,7 +173,7 @@ def run_smoothness_analysis(args, model, dataset, test_dataset, layers, data_loa
 
 			else:
 				result = None				
-				handle = layers[k].register_forward_hook(get_activation(layer_name, args))					
+				handle = layers[k].register_forward_hook(get_activation(layer_name, args))
 				for i, (data, target) in tqdm(enumerate(data_loader), total=len(data_loader)):	
 					if args.use_cuda:
 						data = data.cuda()
@@ -242,7 +243,15 @@ def run_smoothness_analysis(args, model, dataset, test_dataset, layers, data_loa
 		return save_alphas_plot(args, alphas, sizes, \
 			test_stats, clustering_stats, save_to_file=True)
 
-if __name__ == '__main__':
+if __name__ == '__main__':	
 	args, model, dataset, test_dataset, layers, data_loader = init_params()
-	run_smoothness_analysis(args, model, dataset, test_dataset, layers, data_loader)
+	# run_smoothness_analysis(args, model, dataset, test_dataset, layers, data_loader)
+	
+	# layerHandler = LayerHandler(model, data_loader, layers[-1])
+	# layer_outputs = layerHandler.run_model_up_to_layer()
+
+	probe = SparsityProbe(data_loader, model, layers)
+	probe.compute_generalization()
+	
+
 

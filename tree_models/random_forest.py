@@ -45,7 +45,7 @@ class WaveletsForestRegressor:
 		self.norms_normalization = norms_normalization
 		self.save_errors = False
 	
-	def from_label_to_one_hot_label(self, y):
+	def from_label_to_one_hot_label(self, y):		
 		if y.shape[1] != 1:
 			return y
 		num_samples = y.shape[0]
