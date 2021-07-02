@@ -73,31 +73,32 @@ class WaveletsForestRegressor:
 			self.X = X.cpu().numpy()
 
 		self.num_classes = y.max()+1
-		self.y = self.from_label_to_one_hot_label(y)
-
-		regressor = None		
 		if self.mode == 'classification':
-			regressor = ensemble.RandomForestClassifier(
-				criterion='gini',
-				n_estimators=self.trees, 
-				max_depth=self.depth,
-				max_features='auto',
-				n_jobs=-1,
-				random_state=self.seed,
-			)				
+			self.y = self.from_label_to_one_hot_label(y)
 
-		elif self.mode == 'regression':
-			regressor = ensemble.RandomForestRegressor(
-				n_estimators=self.trees, 
-				max_depth=self.depth,
-				max_features='auto',
-				n_jobs=-1,
-				random_state=self.seed,
-				verbose=2
-			)				
-		else:
-			print("ERROR, WRONG MODE")
-			exit()
+		regressor = None	
+		# if self.mode == 'classification':
+		# 	regressor = ensemble.RandomForestClassifier(
+		# 		criterion='gini',
+		# 		n_estimators=self.trees, 
+		# 		max_depth=self.depth,
+		# 		max_features='auto',
+		# 		n_jobs=-1,
+		# 		random_state=self.seed,
+		# 	)		
+
+		# elif self.mode == 'regression':
+		regressor = ensemble.RandomForestRegressor(
+			n_estimators=self.trees, 
+			max_depth=self.depth,
+			max_features='auto',
+			n_jobs=-1,
+			random_state=self.seed,
+			verbose=2
+		)				
+		# else:
+		# 	print("ERROR, WRONG MODE")
+		# 	exit()
 		
 		try:			
 			rf = regressor.fit(self.X, self.y.ravel())
@@ -159,12 +160,12 @@ class WaveletsForestRegressor:
 		return norm
 
 	def compute_average_score_from_tree(self, tree_value):		
-		if self.mode == 'classification':			
-			y_vec = [-1. , 1.]
-			result = tree_value.dot(y_vec)/tree_value.sum()         
-			return result
-		else:
-			return tree_value[:, 0]
+		# if self.mode == 'classification':
+		# 	y_vec = [-1. , 1.]
+		# 	result = tree_value.dot(y_vec)/tree_value.sum()         
+		# 	return result
+		# else:
+		return tree_value[:, 0]
 
 	def __traverse_nodes(self, estimator, base_node_id, node_box, norms, vals, levels):
 
@@ -220,22 +221,17 @@ class WaveletsForestRegressor:
 		h = 0.01
 		
 		diffs = []		
-		taus = np.arange(0.3, 2., h)
+		taus = np.arange(0.1, 2., h)
 		total_sparsities, total_alphas = [], []
 		J = len(self.rf.estimators_)
-
-		use_derivatives = True
+		
 		for tau in tqdm(taus):
-			if use_derivatives:
-				tau_sparsity = (1/J)*np.power(np.power(norms, tau).sum(), ((1/tau)-1))
-				tau_sparsity *= np.power(norms, (tau-1)).sum()
-			else:
-				tau_sparsity = (1/J)*np.power(np.power(norms, tau).sum(), (1/tau))
+			tau_sparsity = (1/J)*np.power(np.power(norms, tau).sum(), ((1/tau)-1))
+			tau_sparsity *= np.power(norms, (tau-1)).sum()			
 			diffs.append(tau_sparsity)
 		diffs = -np.array(diffs)
-
-
 		angles = np.rad2deg(np.arctan(diffs))
+
 		try:
 			step = (epsilon_2 - epsilon_1)/self.num_alpha_sample_points
 			sampling_indices = np.arange(epsilon_1, epsilon_2, step)
