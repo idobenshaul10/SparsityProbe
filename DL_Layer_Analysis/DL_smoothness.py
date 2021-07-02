@@ -250,7 +250,8 @@ if __name__ == '__main__':
 	# layerHandler = LayerHandler(model, data_loader, layers[-1])
 	# layer_outputs = layerHandler.run_model_up_to_layer()
 
-	probe = SparsityProbe(data_loader, model, layers)
+	# probe = SparsityProbe(data_loader, model, None)
+	probe = SparsityProbe(data_loader, model, None)
 	probe.compute_generalization()
 	
 

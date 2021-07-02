@@ -1,8 +1,8 @@
 from tqdm import tqdm
 import torch
 from torch import nn
-from LayerHandler import LayerHandler
-from ModelHandler import ModelHandler
+from DL_Layer_Analysis.LayerHandler import LayerHandler
+from DL_Layer_Analysis.ModelHandler import ModelHandler
 from tree_models.random_forest import WaveletsForestRegressor
 
 class SparsityProbe():
