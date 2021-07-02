@@ -46,14 +46,18 @@ class WaveletsForestRegressor:
 		self.save_errors = False
 	
 	def from_label_to_one_hot_label(self, y):		
-		if y.shape[1] != 1:
+		if len(y.shape) >1 and y.shape[1] != 1:
 			return y
 		num_samples = y.shape[0]
 		self.num_classes = y.max()+1
 		y_result = np.zeros((num_samples, self.num_classes))
 		for i in range(num_samples):			
-			y_result[i][y[i][0]] = 1.		
+			try:
+				y_result[i][y[i][0]] = 1.
+			except:
+				y_result[i][y[i]] = 1.				
 		return y_result
+
 
 	def fit(self, X_raw, y):
 		'''

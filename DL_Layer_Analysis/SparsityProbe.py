@@ -11,9 +11,9 @@ class LayerHandler():
 	def __init__(self, model, loader, layer, apply_dim_reduction=True):
 		self.model = model
 		self.layer = layer
-		self.loader = loader
+		self.loader = loader		
 		self.layer_features = None
-		self.batch_size = 32
+		self.batch_size = self.loader.batch_size
 		self.use_cuda = torch.cuda.is_available()
 		self.apply_dim_reduction = apply_dim_reduction
 		self.dim_reducer = None
@@ -25,11 +25,12 @@ class LayerHandler():
 			if self.layer_features is None:
 				self.layer_features = output.detach().view(self.batch_size, -1)
 			else:
-				try:
+				try:					
 					new_outputs = output.detach().view(-1, self.layer_features.shape[1])
 					self.layer_features = torch.cat((self.layer_features, new_outputs), dim=0)
 				except:
-					pass		
+					print("problems in output!")					
+					pass			
 		return hook	
 
 	def __call__(self):
@@ -79,21 +80,22 @@ class SparsityProbe():
 	def find_final_model_layer(self):
 		pass
 
-	def train_model(self, x, y, mode='regression', trees=5, depth=9, features='auto',
+
+	def train_tree_model(self, x, y, mode='regression', trees=5, depth=9, features='auto',
 				state=2000, nnormalization='volume'):
-	
+
 		model = WaveletsForestRegressor(mode=mode, trees=trees, depth=depth, features=features, \
 			seed=state, norms_normalization=nnormalization)
-		
+
 		model.fit(x, y)
 		return model
 	
-	def run_smoothness_on_layer(self, layer_features):		
-		tree_model = self.train_model(layer_features, self.labels, \
+	def run_smoothness_on_features(self, features):		
+		tree_model = self.train_tree_model(features, self.labels, \
 			trees=self.n_trees, depth=self.depth, features=self.n_features, \
 			state=self.n_state, nnormalization=self.norm_normalization)
 
-		alpha = tree_model.evaluate_angle_smoothness(text=text, \
+		alpha = tree_model.evaluate_angle_smoothness(text='try', \
 			output_folder=self.output_folder, epsilon_1=self.epsilon_1, \
 			epsilon_2=self.epsilon_2)
 
@@ -109,8 +111,8 @@ class SparsityProbe():
 			layer, self.apply_dim_reduction)
 		layer_features = layerHandler()
 
-
-		score = self.run_smoothness_on_layer(layer_features)
+		score = self.run_smoothness_on_features(layer_features)
+		print(f"generalization score for model is: {score}")
 		
 
 
