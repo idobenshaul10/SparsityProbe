@@ -64,17 +64,19 @@ class WaveletsForestRegressor:
 		:X_raw: Non-normalized features, given as a 2D array with each row representing a sample.
 		:y: Labels, each row is given as a vertex on the simplex.
 		'''		
-		logging.info('Fitting %s samples' % np.shape(X_raw)[0])				
-		if type(X_raw) == np.ndarray:			
-			X = (X_raw - np.min(X_raw, 0))/(np.max(X_raw, 0) - np.min(X_raw, 0))
+		logging.info('Fitting %s samples' % np.shape(X_raw)[0])		
+		if type(X_raw) == np.ndarray:
+			X = (X_raw - np.min(X_raw, 0))/((np.max(X_raw, 0) - np.min(X_raw, 0))+1e-6)
 			self.X = X
 		else:
-			X = (X_raw - X_raw.min())/(X_raw.max() - X_raw.min())
+			X = (X_raw - X_raw.min())/((X_raw.max() - X_raw.min())+1e-6)
 			self.X = X.cpu().numpy()
 
 		self.num_classes = y.max()+1
 		if self.mode == 'classification':
 			self.y = self.from_label_to_one_hot_label(y)
+		else:
+			self.y = y
 
 		regressor = None	
 		# if self.mode == 'classification':
@@ -94,7 +96,7 @@ class WaveletsForestRegressor:
 			max_features='auto',
 			n_jobs=-1,
 			random_state=self.seed,
-			verbose=2
+			verbose=0
 		)				
 		# else:
 		# 	print("ERROR, WRONG MODE")
