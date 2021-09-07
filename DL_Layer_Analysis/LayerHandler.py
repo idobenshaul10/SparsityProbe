@@ -2,15 +2,16 @@ import torch
 from tqdm import tqdm
 from DimReducer import DimensionalityReducer
 from dataclasses import dataclass
+import numpy as np
 
 @dataclass
 class LayerHandler:
 	'''Allows to run model up to layer, 
 	and output different computations	
 	'''
-	model: torch.nn.module
-	layer: torch.nn.module
+	model: torch.nn.Module
 	loader: torch.utils.data.DataLoader
+	layer: torch.nn.Module
 	apply_dim_reduction: bool
 	layer_features: np.array = None
 	dim_reducer: DimensionalityReducer = None

@@ -5,13 +5,12 @@ from DimReducer import DimensionalityReducer
 from dataclasses import dataclass
 from LayerHandler import LayerHandler
 
+
 @dataclass
 class ModelHandler:
-    '''Analyzes the model to find intermediate layers
-	'''
-    model: torch.nn.module
-    layers : list = None
-    layer_handlers: list = None
+    """Analyzes the model to find intermediate layers"""
+    model: torch.nn.Module
+    layers: list = None
 
     def __post_init__(self):
         self.init_layers()

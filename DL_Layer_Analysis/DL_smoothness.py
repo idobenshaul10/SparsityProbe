@@ -16,15 +16,10 @@ import time
 import json
 from collections import defaultdict
 import pickle
-# from DL_Layer_Analysis.clustering import kmeans_cluster, \
-# 	get_clustering_statistics, create_umap
-# from DL_Layer_Analysis.get_dim_reduction import get_dim_reduction
-
 from matplotlib.pyplot import plot, ion, show
 from SparsityProbe import *
 
 ion()
-
 
 def get_args():
     parser = argparse.ArgumentParser(description='Network Smoothness Script')
@@ -69,7 +64,6 @@ def init_params(args=None):
     np.random.seed(args.seed)
 
     return args, model, dataset, test_dataset, data_loader
-
 
 activation = {}
 
@@ -135,7 +129,6 @@ def save_alphas_plot(args, alphas, sizes, test_stats=None, \
             json.dump(write_data, f, default=convert)
     return write_data
 
-
 def get_top_1_accuracy(model, data_loader, device):
     softmax = nn.Softmax(dim=1)
     correct_pred = 0
@@ -155,12 +148,14 @@ def get_top_1_accuracy(model, data_loader, device):
 if __name__ == '__main__':
     args, model, dataset, test_dataset, data_loader = init_params()
 
-    model_handler = ModelHandler(model)
-    layers = model_handler.layers
-    import pdb; pdb.set_trace()
+    # layers = model_handler.layers
+
     # layerHandler = LayerHandler(model, data_loader, layers[-1])
     # layer_outputs = layerHandler.run_model_up_to_layer()
 
     # probe = SparsityProbe(data_loader, model, None)
     probe = SparsityProbe(data_loader, model, None)
-    probe.compute_generalization()
+    layer = probe.model_handler.layers[-2]
+    alpha_score = probe.run_smoothness_on_layer(layer)
+    print(f"alpha_score for {layer} is {alpha_score}")
+    # probe.compute_generalization()

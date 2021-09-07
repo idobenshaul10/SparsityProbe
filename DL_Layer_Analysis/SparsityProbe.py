@@ -4,84 +4,94 @@ from torch import nn
 from DL_Layer_Analysis.LayerHandler import LayerHandler
 from DL_Layer_Analysis.ModelHandler import ModelHandler
 from tree_models.random_forest import WaveletsForestRegressor
-
-class SparsityProbe():
-	def __init__(self, loader, model, model_layers=None, \
-		apply_dim_reduction=False, epsilon_1=0.1, epsilon_2=0.4, \
-		mode='classification', n_trees=5, depth=4):
-		
-		self.loader = loader
-		self.model = model
-		self.model_handler = ModelHandler(model)
-		self.model_layers = model_layers
-		self.apply_dim_reduction = apply_dim_reduction
-		self.labels = self.get_labels()
-		
-		# tree parameters
-		self.n_trees=n_trees
-		self.depth=depth
-		self.n_features='auto'
-		self.n_state=2000
-		self.norm_normalization='volume'
-		self.text=''
-		self.output_folder=''
-		self.epsilon_1 = epsilon_1
-		self.epsilon_2 = epsilon_2
-		self.mode = mode
+from dataclasses import dataclass
 
 
-	def get_labels(self):
-		try:
-			Y = torch.cat([target for (data, target) in tqdm(self.loader)]).detach()
-			return Y
-		except Exception as e:
-			# print(f"problems in iterating over dataloader:{e}")
-			return None
+@dataclass
+class SparsityProbe:
+    loader: torch.utils.data.DataLoader
+    model: torch.nn.Module
+    model_handler: ModelHandler = None
+    apply_dim_reduction: bool = False
+    labels: torch.tensor = None
+    epsilon_1: float = 0.1
+    epsilon_2: float = 0.4
+    mode: str = 'classification'
+    n_trees: int = 5
+    depth: int = 4
+    n_features: str = 'auto'
+    n_state: int = 2000
+    norm_normalization: str = 'volume'
+    text: str = ''
+    output_folder: str = ''
 
-	def aggregate_scores(self, scores):
-		'''at the moment we use mean aggregation for alpha scores'''
-		return scores.mean()
+    def __post_init__(self):
+        self.model_handler = ModelHandler(self.model)
+        self.labels = self.get_labels()
 
-	def train_tree_model(self, x, y, mode='regression', \
-		trees=5, depth=9, features='auto',
-		state=2000, nnormalization='volume'):
+    def get_labels(self) -> torch.tensor:
+        try:
+            Y = torch.cat([target for (data, target) in tqdm(self.loader)]).detach()
+            return Y
 
-		model = WaveletsForestRegressor(mode=mode, trees=trees, depth=depth, features=features, \
-			seed=state, norms_normalization=nnormalization)
+        except Exception as e:
+            # print(f"problems in iterating over dataloader:{e}")
+            return None
 
-		model.fit(x, y)
-		return model
-	
-	def run_smoothness_on_features(self, features, labels=None):		
-		if labels is None:
-			labels = self.labels
-		tree_model = self.train_tree_model(features, labels, \
-			trees=self.n_trees, depth=self.depth, features=self.n_features, \
-			state=self.n_state, nnormalization=self.norm_normalization, \
-			mode=self.mode)
+    def aggregate_scores(self, scores) -> float:
+        """at the moment we use mean aggregation for alpha scores"""
+        return scores.mean()
 
-		alpha = tree_model.evaluate_angle_smoothness(text='try', \
-			output_folder=self.output_folder, epsilon_1=self.epsilon_1, \
-			epsilon_2=self.epsilon_2)
+    def get_layers(self) -> list:
+        return self.model_handler.layers
 
-		alpha = self.aggregate_scores(alpha)
-		return alpha
+    def train_tree_model(self, x, y, mode='regression',
+                         trees=5, depth=9, features='auto',
+                         state=2000, nnormalization='volume'):
 
-	def compute_generalization(self):
-		if self.model_layers is None:
-			layer = self.model_handler.get_final_layer()
-		else:
-			layer = self.model_layers[-1]
+        model = WaveletsForestRegressor(mode=mode, trees=trees, depth=depth, features=features,
+                                        seed=state, norms_normalization=nnormalization)
 
-		layerHandler = LayerHandler(self.model, self.loader, \
-			layer, self.apply_dim_reduction)
-		layer_features = layerHandler()
-		score = self.run_smoothness_on_features(layer_features)		
-		print(f"generalization score for model is: {score}")
-		
+        model.fit(x, y)
+        return model
 
+    def run_smoothness_on_features(self, features, labels=None) -> float:
+        if labels is None:
+            labels = self.labels
+        tree_model = self.train_tree_model(features, labels,
+                                           trees=self.n_trees, depth=self.depth, features=self.n_features,
+                                           state=self.n_state, nnormalization=self.norm_normalization,
+                                           mode=self.mode)
 
+        alpha = tree_model.evaluate_angle_smoothness(text='try',
+                                                     output_folder=self.output_folder, epsilon_1=self.epsilon_1,
+                                                     epsilon_2=self.epsilon_2)
 
+        alpha = self.aggregate_scores(alpha)
+        return alpha
 
+    def run_smoothness_on_layer(self, layer: torch.nn.Module) -> float:
+        print(f"computing smoothness on:{layer}")
+        # model: torch.nn.Module
+        # layer: torch.nn.Module
+        # loader: torch.utils.data.DataLoader
+        # apply_dim_reduction: bool
+        # layer_features: np.array = None
+        # dim_reducer: DimensionalityReducer = None
+        # batch_size: int = None
+        # use_cuda: bool = None
+        layer_handler = LayerHandler(model=self.model, loader=self.loader,
+                                     layer=layer, apply_dim_reduction=self.apply_dim_reduction)
+        layer_features = layer_handler()
+        score = self.run_smoothness_on_features(layer_features)
+        return score
 
+    def compute_generalization(self) -> float:
+        if self.model_handler.layers is None:
+            layer = self.model_handler.get_final_layer()
+        else:
+            layer = self.model_handler.layers[-1]
 
+        self.run_smoothness_on_layer(layer)
+        print(f"generalization score for model is: {score}")
+        return score
