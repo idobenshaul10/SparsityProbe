@@ -18,7 +18,7 @@ class ModelHandler:
     def init_layers(self):
         layers = []
         for name, module in self.model.named_modules():
-            if "vit.encoder.layer." in name and len(name) == len("vit.encoder.layer.0"):
+            if ("vit.encoder.layer." in name and len(name) == len("vit.encoder.layer.0")) or name == "vit.embeddings":
                 layers.append(module)
                 print(name)
         self.layers = layers

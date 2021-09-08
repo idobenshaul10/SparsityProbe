@@ -67,7 +67,7 @@ class SparsityProbe:
         return alpha
 
     def run_smoothness_on_layer(self, layer: torch.nn.Module) -> float:
-        print(f"computing smoothness on:{layer}")
+        print(f"computing smoothness on:{layer.split('(')[0]}")
         # layer_handler = None
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
                                      layer=layer, apply_dim_reduction=self.apply_dim_reduction)
