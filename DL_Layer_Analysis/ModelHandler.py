@@ -16,23 +16,31 @@ class ModelHandler:
         self.init_layers()
 
     def init_layers(self):
-        '''
-        returns all layers of the model that have parameters
-        and are not BatchNorm layers. This is not exaustive
-        and should be improved
-        '''
-        try:
-            layers = []
-            for name, module in self.model.named_modules():
-                if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
-                    continue
-                import pdb; pdb.set_trace()
-                if hasattr(module, 'weight'):
-                    layers.append(module)
-            self.layers = layers
-        except Exception as e:
-            print(f"problems in fetching model layers:{e}")
-            self.layers = []
+        layers = []
+        for name, module in self.model.named_modules():
+            if "vit.encoder.layer." in name and len(name) == len("vit.encoder.layer.0"):
+                layers.append(module)
+                print(name)
+        self.layers = layers
+
+    # def init_layers(self):
+    #     '''
+    #     returns all layers of the model that have parameters
+    #     and are not BatchNorm layers. This is not exaustive
+    #     and should be improved
+    #     '''
+    #     try:
+    #         layers = []
+    #         for name, module in self.model.named_modules():
+    #             if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+    #                 continue
+    #             import pdb; pdb.set_trace()
+    #             if hasattr(module, 'weight'):
+    #                 layers.append(module)
+    #         self.layers = layers
+    #     except Exception as e:
+    #         print(f"problems in fetching model layers:{e}")
+    #         self.layers = []
 
     def __call__(self):
         return self.layers

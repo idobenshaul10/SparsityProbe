@@ -5,6 +5,8 @@ from DL_Layer_Analysis.LayerHandler import LayerHandler
 from DL_Layer_Analysis.ModelHandler import ModelHandler
 from tree_models.random_forest import WaveletsForestRegressor
 from dataclasses import dataclass
+import numpy as np
+
 
 @dataclass
 class SparsityProbe:
@@ -29,7 +31,8 @@ class SparsityProbe:
         self.labels = self.get_labels()
 
     def get_labels(self) -> torch.tensor:
-        return torch.tensor(self.loader.dataset.targets)
+        # picks = np.random.permutation(5000)
+        return torch.tensor(self.loader.dataset.targets)#[picks]
 
     def aggregate_scores(self, scores) -> float:
         """at the moment we use mean aggregation for alpha scores"""
@@ -65,9 +68,13 @@ class SparsityProbe:
 
     def run_smoothness_on_layer(self, layer: torch.nn.Module) -> float:
         print(f"computing smoothness on:{layer}")
+        # layer_handler = None
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
                                      layer=layer, apply_dim_reduction=self.apply_dim_reduction)
-        layer_features = layer_handler()
+
+        with layer_handler as lh:
+            layer_features = lh()
+
         score = self.run_smoothness_on_features(layer_features)
         return score
 

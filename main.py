@@ -15,7 +15,11 @@ import pickle
 from matplotlib.pyplot import plot, ion, show
 from DL_Layer_Analysis.SparsityProbe import SparsityProbe
 # from SparsityProbe import *
+from torch.utils.data import Sampler
+
 ion()
+
+
 
 
 def get_args():
@@ -52,7 +56,10 @@ def init_params(args=None):
     if torch.cuda.is_available():
         model = model.cuda()
 
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
+    # picks = np.random.permutation(5000)
+    train_loader = torch.utils.data.DataLoader(train_dataset,
+                                               batch_size=args.batch_size, shuffle=False)
+                                               # sampler=picks)
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
 
@@ -63,10 +70,9 @@ if __name__ == '__main__':
     args, model, dataset, test_dataset, data_loader = init_params()
     probe = SparsityProbe(data_loader, model, apply_dim_reduction=True)
     alphas = []
-    import pdb; pdb.set_trace()
-    for layer in tqdm(probe.model_handler.layers[-7:-1]):
+    for layer in tqdm(probe.model_handler.layers[2:]):
         alpha_score = probe.run_smoothness_on_layer(layer)
         print(f"alpha_score for {layer} is {alpha_score}")
         alphas.append(alpha_score)
+
     import pdb; pdb.set_trace()
-    # probe.compute_generalization()

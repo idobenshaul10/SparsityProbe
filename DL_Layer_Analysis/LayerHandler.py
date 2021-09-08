@@ -22,11 +22,11 @@ class FeaturesBuffer:
         self.shape = self.features.shape
 
     def clear_buffer(self):
-        del self.features
+        self.features = None
 
 
 @dataclass
-class LayerHandler:
+class LayerHandler():
     '''Allows to run model up to layer,
     and output different statistics
     '''
@@ -34,39 +34,37 @@ class LayerHandler:
     loader: torch.utils.data.DataLoader
     layer: torch.nn.Module
     apply_dim_reduction: bool
-    layer_features: FeaturesBuffer = FeaturesBuffer()
-    layer_features_buffer: FeaturesBuffer = FeaturesBuffer()
+    layer_features: FeaturesBuffer = None
+    layer_features_buffer: FeaturesBuffer = None
     dim_reducer: DimensionalityReducer = None
     batch_size: int = None
     use_cuda: bool = None
     dim_reducer_section_count: int = -1
+    handle: torch.utils.hooks.RemovableHandle = None
 
     def __post_init__(self):
         self.model.eval()
+        self.layer_features = FeaturesBuffer()
+        self.layer_features_buffer = FeaturesBuffer()
         self.batch_size = self.loader.batch_size
         self.use_cuda = torch.cuda.is_available()
         if self.apply_dim_reduction:
             self.dim_reducer = DimensionalityReducer()
             self.dim_reducer_section_count = self.dim_reducer.compute_section_number(len(self.loader.dataset))
 
+
     def get_activation(self):
         def hook(model, input, output):
+            output = output[0] if (type(output) == tuple) else output
             new_outputs = output.detach().cpu().numpy()
             self.layer_features_buffer(new_outputs, batch_size=self.batch_size)
-            # if self.layer_features_buffer is None:
-            #     self.layer_features_buffer(output.detach().view(self.batch_size, -1).cpu())
-            # else:
-            #     try:
-            #         new_outputs = output.detach().view(-1, len(self.layer_features_buffer)[1]).cpu()
-            #         self.layer_features_buffer(new_outputs)
-            #     except:
-            #         print("problems in output!")
-            #         pass
-
         return hook
 
+    def __enter__(self):
+        self.handle = self.layer.register_forward_hook(self.get_activation())
+        return self
+
     def __call__(self):
-        handle = self.layer.register_forward_hook(self.get_activation())
         for idx, (data, target) in tqdm(enumerate(self.loader), total=len(self.loader)):
             if self.use_cuda:
                 data = data.cuda()
@@ -84,7 +82,6 @@ class LayerHandler:
                     self.layer_features_buffer.clear_buffer()
             del data
 
-        handle.remove()
         if not self.apply_dim_reduction:
             layer_features = self.layer_features_buffer.features
         else:
@@ -92,6 +89,10 @@ class LayerHandler:
 
         return layer_features
 
-    def dispose(self):
-        # !!TODO!!
-        pass
+    def __exit__(self, type, value, traceback):
+        self.handle.remove()
+        self.layer_features.clear_buffer()
+        self.layer_features_buffer.clear_buffer()
+        self.layer_features = None
+        self.layer_features_buffer = None
+
