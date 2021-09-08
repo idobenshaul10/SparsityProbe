@@ -26,11 +26,12 @@ class ModelHandler:
             for name, module in self.model.named_modules():
                 if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
                     continue
+                import pdb; pdb.set_trace()
                 if hasattr(module, 'weight'):
                     layers.append(module)
             self.layers = layers
         except Exception as e:
-            # print(f"problems in fetching model layers:{e}")
+            print(f"problems in fetching model layers:{e}")
             self.layers = []
 
     def __call__(self):
@@ -47,3 +48,8 @@ if __name__ == '__main__':
     modelHandler = ModelHandler(model)
     final_layer = modelHandler.get_final_layer()
 # probe = SparsityProbe(data_loader, model, None)
+
+
+# ViTEmbeddings,PatchEmbeddings,
+# vit.encoder
+# vit.encoder.layer.0, vit.encoder.layer.1

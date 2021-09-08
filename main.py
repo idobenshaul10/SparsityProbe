@@ -61,9 +61,12 @@ def init_params(args=None):
 
 if __name__ == '__main__':
     args, model, dataset, test_dataset, data_loader = init_params()
-    probe = SparsityProbe(data_loader, model, apply_dim_reduction=False)
-    layer = probe.model_handler.layers[-2]
-
-    alpha_score = probe.run_smoothness_on_layer(layer)
-    print(f"alpha_score for {layer} is {alpha_score}")
+    probe = SparsityProbe(data_loader, model, apply_dim_reduction=True)
+    alphas = []
+    import pdb; pdb.set_trace()
+    for layer in tqdm(probe.model_handler.layers[-7:-1]):
+        alpha_score = probe.run_smoothness_on_layer(layer)
+        print(f"alpha_score for {layer} is {alpha_score}")
+        alphas.append(alpha_score)
+    import pdb; pdb.set_trace()
     # probe.compute_generalization()
