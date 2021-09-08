@@ -7,10 +7,6 @@ from tqdm import tqdm
 import torch.nn as nn
 import matplotlib.pyplot as plt
 import importlib
-
-currentdir = os.path.dirname(__file__)
-parentdir = os.path.dirname(currentdir)
-sys.path.append(parentdir)
 from utils.utils import *
 import time
 import json
@@ -40,7 +36,6 @@ def get_args():
     args.epsilon_2 = 4 * args.epsilon_1
     return args
 
-
 def init_params(args=None):
     if args is None:
         args = get_args()
@@ -64,24 +59,6 @@ def init_params(args=None):
     np.random.seed(args.seed)
 
     return args, model, dataset, test_dataset, data_loader
-
-activation = {}
-
-
-def get_activation(name, args):
-    def hook(model, input, output):
-        if name not in activation:
-            activation[name] = output.detach().view(args.batch_size, -1)
-        else:
-            try:
-                new_outputs = output.detach().view(-1, activation[name].shape[1])
-                activation[name] = \
-                    torch.cat((activation[name], new_outputs), dim=0)
-            except:
-                pass
-
-    return hook
-
 
 def save_alphas_plot(args, alphas, sizes, test_stats=None, \
                      clustering_stats=None, save_to_file=False):
@@ -144,16 +121,8 @@ def get_top_1_accuracy(model, data_loader, device):
             correct_pred += (predicted_labels == y_true).sum()
     return (correct_pred.float() / n).item()
 
-
 if __name__ == '__main__':
     args, model, dataset, test_dataset, data_loader = init_params()
-
-    # layers = model_handler.layers
-
-    # layerHandler = LayerHandler(model, data_loader, layers[-1])
-    # layer_outputs = layerHandler.run_model_up_to_layer()
-
-    # probe = SparsityProbe(data_loader, model, None)
     probe = SparsityProbe(data_loader, model, None)
     layer = probe.model_handler.layers[-2]
     alpha_score = probe.run_smoothness_on_layer(layer)

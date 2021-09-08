@@ -1,6 +1,7 @@
 import torch
 from tqdm import tqdm
-from DimReducer import DimensionalityReducer
+from DL_Layer_Analysis.DimReducer import DimensionalityReducer
+# from DimReducer import DimensionalityReducer
 from dataclasses import dataclass
 import numpy as np
 
@@ -28,10 +29,14 @@ class LayerHandler:
 	def get_activation(self):
 		def hook(model, input, output):
 			if self.layer_features is None:
-				self.layer_features = output.detach().view(self.batch_size, -1).cpu()
+				# self.layer_features = output.detach().view(self.batch_size, -1).cpu()
+				if self.apply_dim_reduction:
+					self.layer_features = self.dim_reducer(self.layer_features)
 			else:
 				try:					
 					new_outputs = output.detach().view(-1, self.layer_features.shape[1]).cpu()
+					# if self.apply_dim_reduction:
+					# 	new_outputs = self.dim_reducer(new_outputs)
 					self.layer_features = torch.cat((self.layer_features, new_outputs), dim=0)
 				except:
 					print("problems in output!")	

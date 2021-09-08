@@ -5,8 +5,8 @@ import pickle
 from sklearn.decomposition import PCA
 from sklearn.decomposition import TruncatedSVD
 
-class DimensionalityReducer():
-	def __init__(self, threshold_dimension=2048, output_dimension=1000):
+class DimensionalityReducer:
+	def __init__(self, threshold_dimension=512, output_dimension=1000):
 		if threshold_dimension < output_dimension:
 			print(f"this reduction seems futile, TH:{threshold_dimension}," +\
 				f" output:{output_dimension}")

@@ -1,9 +1,9 @@
 import torch
 from torch import nn
 from tqdm import tqdm
-from DimReducer import DimensionalityReducer
 from dataclasses import dataclass
-from LayerHandler import LayerHandler
+from DL_Layer_Analysis.LayerHandler import LayerHandler
+from DL_Layer_Analysis.DimReducer import DimensionalityReducer
 
 
 @dataclass
