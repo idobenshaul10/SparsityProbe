@@ -1,0 +1,53 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.1
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    python_version: 3.8.3
+    start_time: 1631127643
+    t:
+      1:
+      - 1
+      - 5
+      4: 3.8.3
+      5: 0.12.1
+      8:
+      - 2
+      - 5
+batch_size:
+  desc: null
+  value: 256
+checkpoints_folder:
+  desc: null
+  value: null
+depth:
+  desc: null
+  value: 15
+env_name:
+  desc: null
+  value: cifar10_vit
+epsilon_1:
+  desc: null
+  value: 0.1
+epsilon_2:
+  desc: null
+  value: 0.4
+feature_dimension:
+  desc: null
+  value: 2500
+output_folder:
+  desc: null
+  value: null
+seed:
+  desc: null
+  value: 2
+trees:
+  desc: null
+  value: 1
+use_cuda:
+  desc: null
+  value: true

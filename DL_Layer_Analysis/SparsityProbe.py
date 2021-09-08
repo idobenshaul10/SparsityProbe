@@ -59,15 +59,15 @@ class SparsityProbe:
                                            state=self.n_state, nnormalization=self.norm_normalization,
                                            mode=self.mode)
 
-        alpha = tree_model.evaluate_angle_smoothness(text='try',
+        alphas = tree_model.evaluate_angle_smoothness(text='try',
                                                      output_folder=self.output_folder, epsilon_1=self.epsilon_1,
                                                      epsilon_2=self.epsilon_2)
 
-        alpha = self.aggregate_scores(alpha)
-        return alpha
+        mean_alpha = self.aggregate_scores(alphas)
+        return mean_alpha, alphas
 
     def run_smoothness_on_layer(self, layer: torch.nn.Module) -> float:
-        print(f"computing smoothness on:{layer.split('(')[0]}")
+        print(f"computing smoothness on:{layer._get_name()}")
         # layer_handler = None
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
                                      layer=layer, apply_dim_reduction=self.apply_dim_reduction)
@@ -75,8 +75,8 @@ class SparsityProbe:
         with layer_handler as lh:
             layer_features = lh()
 
-        score = self.run_smoothness_on_features(layer_features)
-        return score
+        mean_alpha, alphas = self.run_smoothness_on_features(layer_features)
+        return mean_alpha, alphas
 
     def compute_generalization(self) -> float:
         if self.model_handler.layers is None:
@@ -84,6 +84,6 @@ class SparsityProbe:
         else:
             layer = self.model_handler.layers[-1]
 
-        self.run_smoothness_on_layer(layer)
-        print(f"generalization score for model is: {score}")
-        return score
+        mean_alpha, alphas = self.run_smoothness_on_layer(layer)
+        print(f"generalization score for model is: {mean_alpha}")
+        return mean_alpha, alphas

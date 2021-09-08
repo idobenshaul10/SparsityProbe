@@ -1,0 +1,29 @@
+{
+    "os": "Linux-5.8.0-63-generic-x86_64-with-glibc2.10",
+    "python": "3.8.3",
+    "heartbeatAt": "2021-09-08T18:59:14.797907",
+    "startedAt": "2021-09-08T18:59:13.251820",
+    "docker": null,
+    "gpu": "GeForce RTX 3090",
+    "gpu_count": 1,
+    "cpu_count": 12,
+    "cuda": null,
+    "args": [
+        "--env_name",
+        "cifar10_vit",
+        "--batch_size",
+        "256"
+    ],
+    "state": "running",
+    "program": "main.py",
+    "codePath": "main.py",
+    "git": {
+        "remote": "https://github.com/idobenshaul10/SparsityProbe.git",
+        "commit": "a905c0d18af4ea5c3930c770edc7911d9b859f35"
+    },
+    "email": "ido.benshaul@gmail.com",
+    "root": "/home/ido/projects/SparsityProbe",
+    "host": "IdoMonster",
+    "username": "ido",
+    "executable": "/home/ido/miniconda3/envs/dl_env_38/bin/python"
+}
