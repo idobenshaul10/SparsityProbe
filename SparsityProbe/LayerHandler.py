@@ -64,10 +64,17 @@ class LayerHandler():
         return self
 
     def __call__(self):
-        for idx, (data, target) in tqdm(enumerate(self.loader), total=len(self.loader)):
-            if self.use_cuda:
-                data = data.cuda()
-            self.model(data)
+        # for idx, (data, target) in tqdm(enumerate(self.loader), total=len(self.loader)):
+        for idx, loader_data in tqdm(enumerate(self.loader), total=len(self.loader)):
+            if type(loader_data) == dict:
+                data, target = loader_data['pixel_values'], loader_data['labels']
+                self.model(**{'pixel_values': data.cuda(), 'labels': target.cuda()})
+            else:
+                data, target = loader_data
+                if self.use_cuda:
+                    data = data.cuda()
+                self.model(data)
+
             if self.apply_dim_reduction:
                 if self.layer_features_buffer.shape[0] >= self.dim_reducer.threshold_dimension or (
                         idx == len(self.loader) - 1):

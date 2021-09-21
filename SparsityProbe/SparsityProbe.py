@@ -25,9 +25,10 @@ class SparsityProbe:
     norm_normalization: str = 'volume'
     text: str = ''
     output_folder: str = ''
+    layers: list = None
 
     def __post_init__(self):
-        self.model_handler = ModelHandler(self.model)
+        self.model_handler = ModelHandler(self.model, self.layers)
         self.labels = self.get_labels()
 
     def get_labels(self) -> torch.tensor:
@@ -43,15 +44,15 @@ class SparsityProbe:
 
     def train_tree_model(self, x, y, mode='regression',
                          trees=5, depth=9, features='auto',
-                         state=2000, nnormalization='volume'):
+                         state=2000, nnormalization='volume') -> WaveletsForestRegressor:
 
-        model = WaveletsForestRegressor(mode=mode, trees=trees, depth=depth, features=features,
+        model = WaveletsForestRegressor(mode=mode, trees=trees, depth=depth,
                                         seed=state, norms_normalization=nnormalization)
 
         model.fit(x, y)
         return model
 
-    def run_smoothness_on_features(self, features, labels=None) -> float:
+    def run_smoothness_on_features(self, features, labels=None) -> tuple:
         if labels is None:
             labels = self.labels
         tree_model = self.train_tree_model(features, labels,
@@ -65,7 +66,7 @@ class SparsityProbe:
         mean_alpha = self.aggregate_scores(alphas)
         return mean_alpha, alphas
 
-    def run_smoothness_on_layer(self, layer: torch.nn.Module) -> float:
+    def run_smoothness_on_layer(self, layer: torch.nn.Module) -> tuple:
         print(f"computing smoothness on:{layer._get_name()}")
         # layer_handler = None
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
@@ -77,7 +78,7 @@ class SparsityProbe:
         mean_alpha, alphas = self.run_smoothness_on_features(layer_features)
         return mean_alpha, alphas
 
-    def compute_generalization(self) -> float:
+    def compute_generalization(self) -> tuple:
         if self.model_handler.layers is None:
             layer = self.model_handler.get_final_layer()
         else:

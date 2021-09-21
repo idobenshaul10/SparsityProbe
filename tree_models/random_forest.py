@@ -201,7 +201,7 @@ class WaveletsForestRegressor:
         J = len(self.rf.estimators_)
 
         for tau in tqdm(taus):
-            tau_sparsity = (1 / J) * np.power(np.power(norms, tau).sum(), ((1 / tau) - 1))
+            tau_sparsity = (1 / (J*tau)) * np.power(np.power(norms, tau).sum(), ((1 / tau) - 1))
             tau_sparsity *= np.power(norms, (tau - 1)).sum()
             diffs.append(tau_sparsity)
         diffs = -np.array(diffs)
