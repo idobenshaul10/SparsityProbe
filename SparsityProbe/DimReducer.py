@@ -14,8 +14,8 @@ except:
 
 @dataclass
 class DimensionalityReducer:
-    threshold_dimension: int = 1024
-    output_dimension: int = 1000
+    threshold_dimension: int = 128
+    output_dimension: int = 128
     counter: int = 0
     refit_every_batch: bool = True
     truncatedSVD: TruncatedSVD = None
@@ -24,9 +24,12 @@ class DimensionalityReducer:
     def __post_init__(self):
         self.truncatedSVD = TruncatedSVD(n_components=self.output_dimension)
         if wandb_exists:
-            wandb.config.update({"dim_reducer_threshold_dimension": self.threshold_dimension})
-            wandb.config.update({"dim_reducer_output_dimension": self.output_dimension})
-            wandb.config.update({"refit_every_batch": self.refit_every_batch})
+            try:
+                wandb.config.update({"dim_reducer_threshold_dimension": self.threshold_dimension})
+                wandb.config.update({"dim_reducer_output_dimension": self.output_dimension})
+                wandb.config.update({"refit_every_batch": self.refit_every_batch})
+            except:
+                print("wandb not initialized!")
 
     def compute_section_number(self, dataset_size):
         return dataset_size // self.threshold_dimension

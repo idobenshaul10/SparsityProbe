@@ -1,3 +1,5 @@
+import os.path
+
 from tqdm import tqdm
 import torch
 from torch import nn
@@ -6,7 +8,7 @@ from SparsityProbe.ModelHandler import ModelHandler
 from tree_models.random_forest import WaveletsForestRegressor
 from dataclasses import dataclass
 import numpy as np
-
+from pathlib import Path
 
 @dataclass
 class SparsityProbe:
@@ -26,14 +28,17 @@ class SparsityProbe:
     text: str = ''
     output_folder: str = ''
     layers: list = None
+    layer_feature_cache_folder: str = None
 
     def __post_init__(self):
         self.model_handler = ModelHandler(self.model, self.layers)
         self.labels = self.get_labels()
 
     def get_labels(self) -> torch.tensor:
-        # picks = np.random.permutation(5000)
-        return torch.tensor(self.loader.dataset.targets)  # [picks]
+        try:
+            return torch.tensor(self.loader.dataset.targets)  # [picks]
+        except:
+            return torch.tensor(self.loader.dataset['labels'])
 
     def aggregate_scores(self, scores) -> float:
         """at the moment we use mean aggregation for alpha scores"""
@@ -63,17 +68,34 @@ class SparsityProbe:
         alphas = tree_model.evaluate_angle_smoothness(output_folder=self.output_folder, epsilon_1=self.epsilon_1,
                                                       epsilon_2=self.epsilon_2)
 
-        mean_alpha = self.aggregate_scores(alphas)
-        return mean_alpha, alphas
+        aggregated_alpha = self.aggregate_scores(alphas)
+        return aggregated_alpha, alphas
 
-    def run_smoothness_on_layer(self, layer: torch.nn.Module) -> tuple:
+    def run_smoothness_on_layer(self, layer: torch.nn.Module, text: str='') -> tuple:
         print(f"computing smoothness on:{layer._get_name()}")
-        # layer_handler = None
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
                                      layer=layer, apply_dim_reduction=self.apply_dim_reduction)
 
-        with layer_handler as lh:
-            layer_features = lh()
+
+        if self.layer_feature_cache_folder is not None:
+            Path(self.layer_feature_cache_folder).mkdir(exist_ok=True, parents=True)
+            output_path = os.path.join(self.layer_feature_cache_folder, f"{text}.npz")
+            Path(output_path).parent.mkdir(exist_ok=True, parents=True)
+            if os.path.isfile(output_path):
+                # del self.loader
+                print(f"loading layer features from {output_path}")
+                layer_features = np.load(output_path)['layer_features']
+            else:
+                print(f"no cache found at {output_path}, computing layer features")
+                with layer_handler as lh:
+                    layer_features = lh()
+                    np.savez(output_path, layer_features=layer_features)
+                    print(f"saved to {output_path}")
+        else:
+            with layer_handler as lh:
+                layer_features = lh()
+
+        print(f"layer_features:{layer_features.shape}")
 
         mean_alpha, alphas = self.run_smoothness_on_features(layer_features)
         return mean_alpha, alphas
@@ -82,7 +104,7 @@ class SparsityProbe:
         if self.model_handler.layers is None:
             layer = self.model_handler.get_final_layer()
         else:
-            layer = self.model_handler.layers[-1]
+            layer = self.model_handler.layers[-2]
 
         mean_alpha, alphas = self.run_smoothness_on_layer(layer)
         print(f"generalization score for model is: {mean_alpha}")

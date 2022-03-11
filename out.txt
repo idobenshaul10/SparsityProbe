@@ -1,0 +1,44 @@
+running bdist_wheel
+running build
+running build_py
+installing to build/bdist.linux-x86_64/wheel
+running install
+running install_lib
+creating build/bdist.linux-x86_64/wheel
+creating build/bdist.linux-x86_64/wheel/tree_models
+copying build/lib/tree_models/__init__.py -> build/bdist.linux-x86_64/wheel/tree_models
+copying build/lib/tree_models/random_forest.py -> build/bdist.linux-x86_64/wheel/tree_models
+creating build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/__init__.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/DimReducer.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/setup.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/ModelHandler.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/SparsityProbe.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+copying build/lib/SparsityProbe/LayerHandler.py -> build/bdist.linux-x86_64/wheel/SparsityProbe
+running install_egg_info
+running egg_info
+writing SparsityProbe.egg-info/PKG-INFO
+writing dependency_links to SparsityProbe.egg-info/dependency_links.txt
+writing top-level names to SparsityProbe.egg-info/top_level.txt
+reading manifest file 'SparsityProbe.egg-info/SOURCES.txt'
+adding license file 'LICENSE'
+writing manifest file 'SparsityProbe.egg-info/SOURCES.txt'
+Copying SparsityProbe.egg-info to build/bdist.linux-x86_64/wheel/SparsityProbe-1.0-py3.9.egg-info
+running install_scripts
+adding license file "LICENSE" (matched pattern "LICEN[CS]E*")
+creating build/bdist.linux-x86_64/wheel/SparsityProbe-1.0.dist-info/WHEEL
+creating 'dist/SparsityProbe-1.0-py3-none-any.whl' and adding 'build/bdist.linux-x86_64/wheel' to it
+adding 'SparsityProbe/DimReducer.py'
+adding 'SparsityProbe/LayerHandler.py'
+adding 'SparsityProbe/ModelHandler.py'
+adding 'SparsityProbe/SparsityProbe.py'
+adding 'SparsityProbe/__init__.py'
+adding 'SparsityProbe/setup.py'
+adding 'tree_models/__init__.py'
+adding 'tree_models/random_forest.py'
+adding 'SparsityProbe-1.0.dist-info/LICENSE'
+adding 'SparsityProbe-1.0.dist-info/METADATA'
+adding 'SparsityProbe-1.0.dist-info/WHEEL'
+adding 'SparsityProbe-1.0.dist-info/top_level.txt'
+adding 'SparsityProbe-1.0.dist-info/RECORD'
+removing build/bdist.linux-x86_64/wheel

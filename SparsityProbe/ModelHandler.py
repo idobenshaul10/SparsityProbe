@@ -35,7 +35,7 @@ class ModelHandler:
         return self.layers
 
     def get_final_layer(self):
-        return self.layers[-1]
+        return self.layers[-2]
 
 
 if __name__ == '__main__':

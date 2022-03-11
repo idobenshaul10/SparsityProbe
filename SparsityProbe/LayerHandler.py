@@ -11,21 +11,26 @@ class FeaturesBuffer:
     shape: tuple = None
 
     def __call__(self, new_features: np.array, batch_size: int = None) -> None:
+        # print(f"In feature buffer, new_features:{new_features.shape}")
         if self.features is not None:
-            new_features = new_features.reshape(-1, self.shape[1])
+            try:
+                new_features = new_features.reshape(-1, self.shape[1])
+            except:
+                import pdb; pdb.set_trace()
             self.features = np.concatenate((self.features, new_features), axis=0)
         else:
             if batch_size is not None:
                 new_features = new_features.reshape(batch_size, -1)
             self.features = new_features
         self.shape = self.features.shape
+        # print(f"current buffer shape:{self.shape}")
 
     def clear_buffer(self):
         self.features = None
 
 
 @dataclass
-class LayerHandler():
+class LayerHandler:
     '''Allows to run model up to layer,
     and output different statistics
     '''
@@ -42,7 +47,8 @@ class LayerHandler():
     handle: torch.utils.hooks.RemovableHandle = None
 
     def __post_init__(self):
-        self.model.eval()
+        if self.model is not None:
+            self.model.eval()
         self.layer_features = FeaturesBuffer()
         self.layer_features_buffer = FeaturesBuffer()
         self.batch_size = self.loader.batch_size
@@ -64,16 +70,27 @@ class LayerHandler():
         return self
 
     def __call__(self):
-        # for idx, (data, target) in tqdm(enumerate(self.loader), total=len(self.loader)):
+        data = None
         for idx, loader_data in tqdm(enumerate(self.loader), total=len(self.loader)):
+            # import pdb; pdb.set_trace()
             if type(loader_data) == dict:
-                data, target = loader_data['pixel_values'], loader_data['labels']
-                self.model(**{'pixel_values': data.cuda(), 'labels': target.cuda()})
-            else:
+                target = loader_data['labels']
+
+                if 'pixel_values' in loader_data:
+                    data = loader_data['pixel_values']
+                    self.model(**{'pixel_values': data.cuda(), 'labels': target.cuda()})
+                else:
+                    data = loader_data['input_ids']
+                    self.model(**{'input_ids': data.cuda(), 'labels': target.cuda()})
+                # self.model(**{'pixel_values': data.cuda(), 'labels': target.cuda()})
+
+            elif type(loader_data) == tuple or type(loader_data) == list:
                 data, target = loader_data
                 if self.use_cuda:
                     data = data.cuda()
                 self.model(data)
+            else:
+                self.model(**loader_data)
 
             if self.apply_dim_reduction:
                 if self.layer_features_buffer.shape[0] >= self.dim_reducer.threshold_dimension or (
@@ -86,7 +103,8 @@ class LayerHandler():
                     reduced_buffer_content = self.dim_reducer(self.layer_features_buffer.features)
                     self.layer_features(reduced_buffer_content)
                     self.layer_features_buffer.clear_buffer()
-            del data
+            if data is not None:
+                del data
 
         if not self.apply_dim_reduction:
             layer_features = self.layer_features_buffer.features

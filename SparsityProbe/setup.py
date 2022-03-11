@@ -7,5 +7,5 @@ setup(
 	author='ido',
 	author_email='ido.benshaul@gmail.com',
 	url='',
-	packages=['SparsityProbe']
+	packages=['SparsityProbe', 'tree_models']
 )

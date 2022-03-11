@@ -5,6 +5,7 @@ from sklearn import tree, linear_model, ensemble
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import plot, ion, show
 from tqdm import tqdm
+from sklearn import preprocessing
 
 
 class WaveletsForestRegressor:
@@ -19,7 +20,7 @@ class WaveletsForestRegressor:
         :seed: Seed for random operations. Default is 2000.
         '''
 
-        np.random.seed(2000)
+        np.random.seed(seed)
 
         self.norms = None
         self.vals = None
@@ -34,7 +35,7 @@ class WaveletsForestRegressor:
         self.regressor = regressor
         self.criterion = criterion
         self.verbose = False
-        self.num_alpha_sample_points = 10
+        self.num_alpha_sample_points = 100
         self.depth = None if depth == -1 else depth
 
         self.trees = trees
@@ -47,12 +48,9 @@ class WaveletsForestRegressor:
             return y
         num_samples = y.shape[0]
         self.num_classes = y.max() + 1
-        y_result = np.zeros((num_samples, self.num_classes))
-        for i in range(num_samples):
-            try:
-                y_result[i][y[i][0]] = 1.
-            except:
-                y_result[i][y[i]] = 1.
+        # y_result = np.zeros((num_samples, self.num_classes))
+        print("creating one-hot encodings")
+        y_result = np.eye(self.num_classes)[y]
         return y_result
 
     def fit(self, X_raw, y):
@@ -62,7 +60,11 @@ class WaveletsForestRegressor:
         '''
         logging.info('Fitting %s samples' % np.shape(X_raw)[0])
         if type(X_raw) == np.ndarray:
-            X = (X_raw - np.min(X_raw, 0)) / ((np.max(X_raw, 0) - np.min(X_raw, 0)) + 1e-6)
+            try:
+                min_max_scaler = preprocessing.MinMaxScaler()
+                X = min_max_scaler.fit_transform(X_raw)
+            except:
+                X = (X_raw - np.min(X_raw, 0)) / ((np.max(X_raw, 0) - np.min(X_raw, 0)) + 1e-6)
             self.X = X
         else:
             X = (X_raw - X_raw.min()) / ((X_raw.max() - X_raw.min()) + 1e-6)
@@ -71,6 +73,7 @@ class WaveletsForestRegressor:
         self.num_classes = y.max() + 1
         if self.mode == 'classification':
             self.y = self.from_label_to_one_hot_label(y)
+            del y
         else:
             self.y = y
 
@@ -78,6 +81,7 @@ class WaveletsForestRegressor:
 
         # elif self.mode == 'regression':
         regressor = ensemble.RandomForestRegressor(
+            # criterion="absolute_error",
             n_estimators=self.trees,
             max_depth=self.depth,
             max_features='auto',
@@ -201,7 +205,7 @@ class WaveletsForestRegressor:
         J = len(self.rf.estimators_)
 
         for tau in tqdm(taus):
-            tau_sparsity = (1 / (J*tau)) * np.power(np.power(norms, tau).sum(), ((1 / tau) - 1))
+            tau_sparsity = (1 / J) * np.power(np.power(norms, tau).sum(), ((1 / tau) - 1))
             tau_sparsity *= np.power(norms, (tau - 1)).sum()
             diffs.append(tau_sparsity)
         diffs = -np.array(diffs)
