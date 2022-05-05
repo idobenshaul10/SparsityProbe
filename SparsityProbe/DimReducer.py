@@ -5,6 +5,7 @@ import pickle
 from sklearn.decomposition import PCA
 from sklearn.decomposition import TruncatedSVD
 from dataclasses import dataclass
+from time import time
 wandb_exists = True
 try:
     import wandb
@@ -14,8 +15,8 @@ except:
 
 @dataclass
 class DimensionalityReducer:
-    threshold_dimension: int = 128
-    output_dimension: int = 128
+    threshold_dimension: int = 1000
+    output_dimension: int = 1000
     counter: int = 0
     refit_every_batch: bool = True
     truncatedSVD: TruncatedSVD = None
@@ -35,17 +36,26 @@ class DimensionalityReducer:
         return dataset_size // self.threshold_dimension
 
     def __call__(self, X):
-        if self.threshold_dimension > X.shape[0]:
-            return X
+        # if self.threshold_dimension > X.shape[0]:
+        #     return X
 
         if self.refit_every_batch:
             if not self.DR_fitted:
-                self.truncatedSVD.fit(X)
+                print(f"DR not fitted yet, fitting now, {X.shape}")
+                try:
+                    start = time()
+                    print("before fit")
+                    self.truncatedSVD.fit(X)
+                    print(f"after fit, took:{time()-start}")
+                except:
+                    import pdb; pdb.set_trace()
                 self.DR_fitted = True
                 print("fitting Dim Reducer")
 
             _embedded = self.truncatedSVD.transform(X)
         else:
+            if self.threshold_dimension > X.shape[0]:
+                return X
             _embedded = self.truncatedSVD.fit_transform(X)
 
         self.counter += 1

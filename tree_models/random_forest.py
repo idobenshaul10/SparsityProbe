@@ -24,6 +24,7 @@ class WaveletsForestRegressor:
 		np.random.seed(seed)
 
 		self.norms = None
+		self.sorted_norms = None
 		self.vals = None
 		self.power = 2
 		##
@@ -50,7 +51,8 @@ class WaveletsForestRegressor:
 		num_samples = y.shape[0]
 		self.num_classes = y.max() + 1
 		# y_result = np.zeros((num_samples, self.num_classes))
-		print("creating one-hot encodings")
+		if self.verbose:
+			print("creating one-hot encodings")
 		y_result = np.eye(self.num_classes)[y]
 		return y_result
 
@@ -142,7 +144,7 @@ class WaveletsForestRegressor:
 
 			self.num_samples = np.append(self.num_samples, num_samples)
 			self.vals = np.append(self.vals, vals, axis=1)
-
+		self.sorted_norms = np.argsort(-self.norms)
 		return self
 
 	def __compute_norm(self, avg, parent_avg, volume):
@@ -208,7 +210,7 @@ class WaveletsForestRegressor:
 			return np.array([tau_sparsity])
 		else:
 			diffs = []
-			taus = np.arange(0.1, 2., h)
+			taus = np.arange(1e-3, self.power, h)
 			for tau in tqdm(taus):
 				tau_sparsity = (1 / J) * np.power(np.power(norms, tau).sum(), ((1 / tau) - 1))
 				tau_sparsity *= np.power(norms, (tau - 1)).sum()
@@ -216,7 +218,9 @@ class WaveletsForestRegressor:
 			diffs = -np.array(diffs)
 			angles = np.rad2deg(np.arctan(diffs))
 
+
 			try:
+				assert (epsilon_2 > epsilon_1)
 				step = (epsilon_2 - epsilon_1) / self.num_alpha_sample_points
 				sampling_indices = np.arange(epsilon_1, epsilon_2, step)
 				alphas = []
@@ -249,14 +253,8 @@ class WaveletsForestRegressor:
 							color=colors[2], zorder=2, s=0.5, label='epsilon high')
 
 				plt.legend()
-
+				plt.show(block=True)
 				print(f"abs(angles+90.).min():{abs(angles + 90.).min()}")
-
-				save_path = os.path.join(output_folder, f"{text}_{epsilon_1}_{epsilon_2}_derivates.png")
-				print(f"save_path:{save_path}")
-				plt.savefig(save_path, \
-							dpi=300, bbox_inches='tight')
-				plt.clf()
 
 				plt.figure(2)
 				plt.title(f"tau vs. derivative")
@@ -269,11 +267,7 @@ class WaveletsForestRegressor:
 							color=colors[2], zorder=2, s=0.5, label='epsilon high')
 
 				plt.legend()
-
-				save_path = os.path.join(output_folder, f"{text}_{epsilon_1}_{epsilon_2}_angles.png")
-				print(f"save_path:{save_path}")
-				plt.savefig(save_path,
-							dpi=300, bbox_inches='tight')
+				plt.show(block=True)
 				plt.clf()
 			return alphas
 
@@ -288,11 +282,10 @@ class WaveletsForestRegressor:
 		:return: Predictions.
 		'''
 
-		sorted_norms = np.argsort(-self.norms)[start_m:m]
+		cur_sorted_norms = self.sorted_norms[start_m: m]
 		if paths == None:
-			paths, n_nodes_ptr = self.rf.decision_path(X)
+			paths, _ = self.rf.decision_path(X)
 		pruned = lil_matrix(paths.shape, dtype=np.float32)
-		pruned[:, sorted_norms] = paths[:, sorted_norms]
+		pruned[:, cur_sorted_norms] = paths[:, cur_sorted_norms]
 		predictions = pruned * self.vals.T / len(self.rf.estimators_)
-
-		return predictions
+		return predictions, paths

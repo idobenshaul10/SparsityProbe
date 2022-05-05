@@ -71,8 +71,8 @@ class LayerHandler:
 
     def __call__(self):
         data = None
-        for idx, loader_data in tqdm(enumerate(self.loader), total=len(self.loader)):
-            # import pdb; pdb.set_trace()
+        # for idx, loader_data in tqdm(enumerate(self.loader), total=len(self.loader)):
+        for idx, loader_data in enumerate(self.loader):
             if type(loader_data) == dict:
                 target = loader_data['labels']
 
@@ -93,20 +93,21 @@ class LayerHandler:
                 self.model(**loader_data)
 
             if self.apply_dim_reduction:
-                if self.layer_features_buffer.shape[0] >= self.dim_reducer.threshold_dimension or (
-                        idx == len(self.loader) - 1):
+                if min(self.layer_features_buffer.shape) >= self.dim_reducer.threshold_dimension or (
+                        (idx == len(self.loader) - 1) and self.dim_reducer.DR_fitted):
 
                     if not idx == len(self.loader) - 1:
                         if self.dim_reducer.counter == self.dim_reducer_section_count - 1:
                             continue
 
                     reduced_buffer_content = self.dim_reducer(self.layer_features_buffer.features)
+                    # print(f"after dim reducer, reduced_buffer_content:{reduced_buffer_content.shape}")
                     self.layer_features(reduced_buffer_content)
                     self.layer_features_buffer.clear_buffer()
             if data is not None:
                 del data
 
-        if not self.apply_dim_reduction:
+        if (not self.apply_dim_reduction) or (self.layer_features.features is None):
             layer_features = self.layer_features_buffer.features
         else:
             layer_features = self.layer_features.features

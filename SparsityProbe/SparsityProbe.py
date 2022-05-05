@@ -17,6 +17,7 @@ class SparsityProbe:
     model_handler: ModelHandler = None
     apply_dim_reduction: bool = False
     labels: torch.tensor = None
+    compute_using_index: bool = False
     epsilon_1: float = 0.1
     epsilon_2: float = 0.4
     mode: str = 'classification'
@@ -47,7 +48,7 @@ class SparsityProbe:
     def get_layers(self) -> list:
         return self.model_handler.layers
 
-    def train_tree_model(self, x, y, mode='regression',
+    def train_tree_model(self, x, y, mode='classification',
                          trees=5, depth=9, features='auto',
                          state=2000, nnormalization='volume') -> WaveletsForestRegressor:
 
@@ -66,13 +67,13 @@ class SparsityProbe:
                                            mode=self.mode)
 
         alphas = tree_model.evaluate_angle_smoothness(output_folder=self.output_folder, epsilon_1=self.epsilon_1,
-                                                      epsilon_2=self.epsilon_2)
+                                                      epsilon_2=self.epsilon_2, compute_using_index=self.compute_using_index)
 
         aggregated_alpha = self.aggregate_scores(alphas)
         return aggregated_alpha, alphas
 
     def run_smoothness_on_layer(self, layer: torch.nn.Module, text: str='') -> tuple:
-        print(f"computing smoothness on:{layer._get_name()}")
+        print(f"\ncomputing smoothness on:{layer._get_name()}")
         layer_handler = LayerHandler(model=self.model, loader=self.loader,
                                      layer=layer, apply_dim_reduction=self.apply_dim_reduction)
 
