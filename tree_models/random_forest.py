@@ -27,6 +27,7 @@ class WaveletsForestRegressor:
 		self.sorted_norms = None
 		self.vals = None
 		self.power = 2
+		self.VI_power = 1
 		##
 		self.volumes = None
 		self.X = None
@@ -159,12 +160,11 @@ class WaveletsForestRegressor:
 					vi_vals = np.zeros((val_size, num_nodes))
 					self.__variable_importance(estimator, 0, vi_node_box, vi_norms, vi_vals, k, self.vi_threshold)
 					if self.norms_normalization == 'volume':
-						vi_norms = np.multiply(vi_norms, np.power(volumes, 1 / self.power))
+						vi_norms = np.multiply(vi_norms, np.power(volumes, 1 / self.VI_power))
 					else:
-						vi_norms = np.multiply(vi_norms, np.power(num_samples, 1 / self.power))
+						vi_norms = np.multiply(vi_norms, np.power(num_samples, 1 / self.VI_power))
 					self.si_tree[k, i] = np.sum(vi_norms)
 
-		import pdb; pdb.set_trace()
 		self.si = np.append(self.si, np.sum(self.si_tree, 1) / len(rf.estimators_))
 		self.feature_importances_ = self.si
 
