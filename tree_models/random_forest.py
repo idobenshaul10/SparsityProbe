@@ -12,7 +12,7 @@ from scipy.sparse import csr_matrix, lil_matrix
 class WaveletsForestRegressor:
 	def __init__(self, regressor='random_forest', mode='classification',
 				 criterion='gini', depth=9, trees=5, seed=2000,
-				 norms_normalization='volume'):
+				 norms_normalization='volume', train_vi=True, vi_threshold=0.8):
 		'''
         Construct a new 'WaveletsForestRegressor' object.
         :criterion: Splitting criterion. Same options as sklearn\'s DecisionTreeRegressor. Default is "mse".
@@ -44,6 +44,10 @@ class WaveletsForestRegressor:
 		self.seed = seed
 		self.norms_normalization = norms_normalization
 		self.save_errors = False
+
+		self.train_vi = train_vi
+		self.vi_threshold = vi_threshold
+		self.norms_normalization = norms_normalization
 
 	def from_label_to_one_hot_label(self, y):
 		if len(y.shape) > 1 and y.shape[1] != 1:
@@ -109,6 +113,8 @@ class WaveletsForestRegressor:
 		self.vals = np.zeros((val_size, 0))
 		self.volumes = np.array([])
 		self.num_samples = np.array([])
+		self.si_tree = np.zeros((np.shape(X)[1], len(rf.estimators_)))
+		self.si = np.array([])
 		self.root_nodes = []
 
 		for i in range(len(rf.estimators_)):
@@ -144,6 +150,24 @@ class WaveletsForestRegressor:
 
 			self.num_samples = np.append(self.num_samples, num_samples)
 			self.vals = np.append(self.vals, vals, axis=1)
+			##
+			if self.train_vi:
+				for k in range(0, num_features):
+					vi_node_box = np.zeros((num_nodes, num_features, 2))
+					vi_node_box[:, :, 1] = 1
+					vi_norms = np.zeros(num_nodes)
+					vi_vals = np.zeros((val_size, num_nodes))
+					self.__variable_importance(estimator, 0, vi_node_box, vi_norms, vi_vals, k, self.vi_threshold)
+					if self.norms_normalization == 'volume':
+						vi_norms = np.multiply(vi_norms, np.power(volumes, 1 / self.power))
+					else:
+						vi_norms = np.multiply(vi_norms, np.power(num_samples, 1 / self.power))
+					self.si_tree[k, i] = np.sum(vi_norms)
+
+		import pdb; pdb.set_trace()
+		self.si = np.append(self.si, np.sum(self.si_tree, 1) / len(rf.estimators_))
+		self.feature_importances_ = self.si
+
 		self.sorted_norms = np.argsort(-self.norms)
 		return self
 
@@ -218,7 +242,6 @@ class WaveletsForestRegressor:
 			diffs = -np.array(diffs)
 			angles = np.rad2deg(np.arctan(diffs))
 
-
 			try:
 				assert (epsilon_2 > epsilon_1)
 				step = (epsilon_2 - epsilon_1) / self.num_alpha_sample_points
@@ -289,3 +312,31 @@ class WaveletsForestRegressor:
 		pruned[:, cur_sorted_norms] = paths[:, cur_sorted_norms]
 		predictions = pruned * self.vals.T / len(self.rf.estimators_)
 		return predictions, paths
+
+	def __variable_importance(self, estimator, base_node_id, vi_node_box, vi_norms, vi_vals, feature, threshod):
+		if base_node_id == 0:
+			vi_vals[:, base_node_id] = estimator.tree_.value[base_node_id][:, 0]
+			vi_norms[base_node_id] = self.__compute_norm(vi_vals[:, base_node_id], 0, 1)
+
+		left_id = estimator.tree_.children_left[base_node_id]
+		right_id = estimator.tree_.children_right[base_node_id]
+		if left_id >= 0:
+			vi_node_box[left_id, :, :] = vi_node_box[base_node_id, :, :]
+			vi_node_box[left_id, estimator.tree_.feature[base_node_id], 1] = np.min(
+				[estimator.tree_.threshold[base_node_id],
+				 vi_node_box[left_id, estimator.tree_.feature[base_node_id], 1]])
+			self.__variable_importance(estimator, left_id, vi_node_box, vi_norms, vi_vals, feature, self.vi_threshold)
+			vi_vals[:, left_id] = estimator.tree_.value[left_id][:, 0] - estimator.tree_.value[base_node_id][:, 0]
+			tnorm = self.__compute_norm(vi_vals[:, left_id], vi_vals[:, base_node_id], 1)
+			if estimator.tree_.feature[estimator.tree_.children_left[base_node_id]] == feature and tnorm > threshod:
+				vi_norms[left_id] = tnorm
+		if right_id >= 0:
+			vi_node_box[right_id, :, :] = vi_node_box[base_node_id, :, :]
+			vi_node_box[right_id, estimator.tree_.feature[base_node_id], 0] = np.max(
+				[estimator.tree_.threshold[base_node_id],
+				 vi_node_box[right_id, estimator.tree_.feature[base_node_id], 0]])
+			self.__variable_importance(estimator, right_id, vi_node_box, vi_norms, vi_vals, feature, self.vi_threshold)
+			vi_vals[:, right_id] = estimator.tree_.value[right_id][:, 0] - estimator.tree_.value[base_node_id][:, 0]
+			tnorm = self.__compute_norm(vi_vals[:, right_id], vi_vals[:, base_node_id], 1)
+			if estimator.tree_.feature[estimator.tree_.children_right[base_node_id]] == feature and tnorm > threshod:
+				vi_norms[right_id] = tnorm
