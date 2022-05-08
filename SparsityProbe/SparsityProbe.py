@@ -65,7 +65,7 @@ class SparsityProbe:
                                            trees=self.n_trees, depth=self.depth, features=self.n_features,
                                            state=self.n_state, nnormalization=self.norm_normalization,
                                            mode=self.mode)
-
+        print("evaluating smoothness")
         alphas = tree_model.evaluate_angle_smoothness(output_folder=self.output_folder, epsilon_1=self.epsilon_1,
                                                       epsilon_2=self.epsilon_2, compute_using_index=self.compute_using_index)
 

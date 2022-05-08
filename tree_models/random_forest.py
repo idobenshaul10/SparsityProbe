@@ -95,7 +95,7 @@ class WaveletsForestRegressor:
 			max_features='auto',
 			n_jobs=-1,
 			random_state=self.seed,
-			verbose=0
+			verbose=1
 		)
 
 		try:
