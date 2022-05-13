@@ -39,7 +39,10 @@ class SparsityProbe:
         try:
             return torch.tensor(self.loader.dataset.targets)  # [picks]
         except:
-            return torch.tensor(self.loader.dataset['labels'])
+            try:
+                return torch.tensor([k[1].item() for k in self.loader.dataset])
+            except:
+                return torch.tensor(self.loader.dataset['labels'])
 
     def aggregate_scores(self, scores) -> float:
         """at the moment we use mean aggregation for alpha scores"""
